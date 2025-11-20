@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { getBaseUrl, isLocalhost } from "@/lib/url";
 
 export default function Home() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const isProduction = !baseUrl.includes('localhost') && !baseUrl.includes('127.0.0.1');
+  const baseUrl = getBaseUrl();
+  const isProduction = !isLocalhost(baseUrl);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 font-sans">

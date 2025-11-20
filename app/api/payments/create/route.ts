@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mollieClient } from '@/lib/mollie';
+import { getBaseUrl, isLocalhost } from '@/lib/url';
 import type { PaymentRequest, PaymentResponse } from '@/types/mollie';
 import type { PaymentCreateParams } from '@mollie/api-client';
 
@@ -25,8 +26,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le paiement Mollie
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+    const baseUrl = getBaseUrl();
+    const isLocal = isLocalhost(baseUrl);
 
     const paymentData: PaymentCreateParams = {
       amount: {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Only add webhook in production (not on localhost)
-    if (!isLocalhost) {
+    if (!isLocal) {
       paymentData.webhookUrl = `${baseUrl}/api/payments/webhook`;
     }
 
