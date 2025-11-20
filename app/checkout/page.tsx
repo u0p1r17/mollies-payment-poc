@@ -54,6 +54,11 @@ export default function CheckoutPage() {
         throw new Error('URL de paiement manquante dans la réponse');
       }
 
+      // Stocker l'ID du paiement dans le localStorage pour le retrouver après la redirection
+      // (car Mollie ne remplace pas toujours le placeholder {id} sur la page de test)
+      localStorage.setItem('lastPaymentId', data.id);
+      console.log('💾 ID du paiement sauvegardé dans le navigateur');
+
       // Rediriger vers la page de paiement Mollie dans 3 secondes
       console.log('⏳ Redirection vers Mollie dans 3 secondes...');
       setTimeout(() => {

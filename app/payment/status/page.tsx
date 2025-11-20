@@ -7,17 +7,30 @@ import type { PaymentStatusResponse } from '@/types/mollie';
 function PaymentStatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paymentId = searchParams.get('id');
+  const urlPaymentId = searchParams.get('id');
 
   const [payment, setPayment] = useState<PaymentStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!paymentId) {
-      setError('ID de paiement manquant');
-      setLoading(false);
-      return;
+    // Déterminer quel ID utiliser
+    let paymentId = urlPaymentId;
+
+    // Si l'ID dans l'URL est manquant ou est le placeholder {id},
+    // utiliser l'ID du localStorage
+    if (!paymentId || paymentId === '{id}') {
+      const storedId = localStorage.getItem('lastPaymentId');
+      if (storedId) {
+        console.log('✅ ID récupéré depuis le localStorage:', storedId);
+        paymentId = storedId;
+        // Nettoyer le localStorage après utilisation
+        localStorage.removeItem('lastPaymentId');
+      } else {
+        setError('ID de paiement manquant. Veuillez créer un nouveau paiement.');
+        setLoading(false);
+        return;
+      }
     }
 
     const fetchPaymentStatus = async () => {
@@ -38,7 +51,7 @@ function PaymentStatusContent() {
     };
 
     fetchPaymentStatus();
-  }, [paymentId]);
+  }, [urlPaymentId]);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
