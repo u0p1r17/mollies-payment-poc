@@ -41,17 +41,24 @@ export default function CheckoutPage() {
       }
 
       // Debug: afficher la réponse
-      console.log('Réponse de l\'API:', data);
-      console.log('Checkout URL:', data.checkoutUrl);
+      console.log('✅ Paiement créé avec succès!');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📋 ID du paiement:', data.id);
+      console.log('💰 Montant:', data.amount.value, data.amount.currency);
+      console.log('🔗 Checkout URL:', data.checkoutUrl);
+      console.log('🔍 Pour tester le statut:', `${window.location.origin}/payment/status?id=${data.id}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       // Vérifier que le checkoutUrl existe
       if (!data.checkoutUrl) {
         throw new Error('URL de paiement manquante dans la réponse');
       }
 
-      // Rediriger vers la page de paiement Mollie
-      console.log('Redirection vers:', data.checkoutUrl);
-      window.location.href = data.checkoutUrl;
+      // Rediriger vers la page de paiement Mollie dans 3 secondes
+      console.log('⏳ Redirection vers Mollie dans 3 secondes...');
+      setTimeout(() => {
+        window.location.href = data.checkoutUrl;
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
       setLoading(false);

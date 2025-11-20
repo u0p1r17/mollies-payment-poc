@@ -1,14 +1,31 @@
 import Link from "next/link";
 
 export default function Home() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const isProduction = !baseUrl.includes('localhost') && !baseUrl.includes('127.0.0.1');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 font-sans">
       <div className="text-center max-w-2xl px-4">
+        {/* Indicateur d'environnement */}
+        <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mb-4 ${
+          isProduction
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+        }`}>
+          {isProduction ? '🌐 Production' : '🛠️ Développement'}
+        </div>
+
         <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
           Intégration Mollie
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
           Proof of Concept - Système de paiement sécurisé avec Next.js
+        </p>
+
+        {/* Info Base URL */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-8">
+          Base URL: {baseUrl}
         </p>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-8">
