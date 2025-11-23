@@ -8,3 +8,5 @@ if (!process.env.MOLLIE_API_KEY) {
 export const mollieClient = createMollieClient({
   apiKey: process.env.MOLLIE_API_KEY,
 });
+
+

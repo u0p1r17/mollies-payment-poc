@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { mollieClient } from '@/lib/mollie';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -21,49 +22,58 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/payments/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // const response = await fetch('/api/payments/create', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     amount: parseFloat(formData.amount),
+      //     description: formData.description,
+      //     customerEmail: formData.customerEmail,
+      //     customerName: formData.customerName,
+      //   }),
+      // });
+      const response = await mollieClient.payments.create({
+        amount: {
+          value: formData.amount,
+          currency: 'EUR',
         },
-        body: JSON.stringify({
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          customerEmail: formData.customerEmail,
-          customerName: formData.customerName,
-        }),
+        description: formData.description,
       });
 
-      const data = await response.json();
+      console.log(response);
+      
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la création du paiement');
-      }
+      
+      // if (!response.ok) {
+      //   throw new Error(data.error || 'Erreur lors de la création du paiement');
+      // }
 
-      // Debug: afficher la réponse
-      console.log('✅ Paiement créé avec succès!');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📋 ID du paiement:', data.id);
-      console.log('💰 Montant:', data.amount.value, data.amount.currency);
-      console.log('🔗 Checkout URL:', data.checkoutUrl);
-      console.log('🔍 Pour tester le statut:', `${window.location.origin}/payment/status?id=${data.id}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      // // Debug: afficher la réponse
+      // console.log('✅ Paiement créé avec succès!');
+      // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      // console.log('📋 ID du paiement:', data.id);
+      // console.log('💰 Montant:', data.amount.value, data.amount.currency);
+      // console.log('🔗 Checkout URL:', data.checkoutUrl);
+      // console.log('🔍 Pour tester le statut:', `${window.location.origin}/payment/status?id=${data.id}`);
+      // console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      // Vérifier que le checkoutUrl existe
-      if (!data.checkoutUrl) {
-        throw new Error('URL de paiement manquante dans la réponse');
-      }
+      // // Vérifier que le checkoutUrl existe
+      // if (!data.checkoutUrl) {
+      //   throw new Error('URL de paiement manquante dans la réponse');
+      // }
 
-      // Stocker l'ID du paiement dans le localStorage pour le retrouver après la redirection
-      // (car Mollie ne remplace pas toujours le placeholder {id} sur la page de test)
-      localStorage.setItem('lastPaymentId', data.id);
-      console.log('💾 ID du paiement sauvegardé dans le navigateur');
+      // // Stocker l'ID du paiement dans le localStorage pour le retrouver après la redirection
+      // // (car Mollie ne remplace pas toujours le placeholder {id} sur la page de test)
+      // localStorage.setItem('lastPaymentId', data.id);
+      // console.log('💾 ID du paiement sauvegardé dans le navigateur');
 
-      // Rediriger vers la page de paiement Mollie dans 3 secondes
-      console.log('⏳ Redirection vers Mollie dans 3 secondes...');
-      setTimeout(() => {
-        window.location.href = data.checkoutUrl;
-      }, 3000);
+      // // Rediriger vers la page de paiement Mollie dans 3 secondes
+      // console.log('⏳ Redirection vers Mollie dans 3 secondes...');
+      // setTimeout(() => {
+      //   window.location.href = data.checkoutUrl;
+      // }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
       setLoading(false);
@@ -71,6 +81,7 @@ export default function CheckoutPage() {
   };
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full">
         <div className="mb-8 text-center">
