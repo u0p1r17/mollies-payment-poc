@@ -1,4 +1,4 @@
-import type { Locale, PaymentStatus } from '@mollie/api-client';
+import type { PaymentStatus } from '@mollie/api-client';
 
 export interface PaymentRequest {
   amount: number;
@@ -26,28 +26,6 @@ export interface PaymentStatusResponse {
   };
   description: string;
   paidAt?: string;
-}
-
-const countryToLocale: Record<string, Locale> = {
-    DE: Locale.de_DE,
-    AT: Locale.de_AT,
-    NL: Locale.nl_NL,
-    FR: Locale.fr_FR,
-    BE: Locale.fr_BE,
-    UK: Locale.en_US,
-    SE: Locale.sv_SE,
-    PT: Locale.pt_PT,
-    IT: Locale.it_IT,
-    CH: Locale.de_CH,
-    ES: Locale.es_ES,
-};
-
-function getLocaleForCountry(country: string): Locale {
-    let locale = countryToLocale[country];
-    if (!locale) {
-        locale = Locale.fr_BE;
-    }
-    return locale;
 }
 
 // export async function mollieCreatePayment({
