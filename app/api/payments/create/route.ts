@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mollieClient } from "@/lib/mollie";
+import { PaymentMethod } from "@mollie/api-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
         country: country,
       },
       cardToken: cardToken,
-      method: "creditcard",
+      method: PaymentMethod.creditcard,
       redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/payment/status?id={id}`,
       webhookUrl:
         process.env.NODE_ENV === "production"
