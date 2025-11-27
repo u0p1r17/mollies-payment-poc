@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mollieClient } from "@/lib/mollie";
 import { PaymentMethod } from "@mollie/api-client";
+import { getBaseUrl } from "@/lib/url";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,9 +21,19 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validation basique
-    if (!amount || amount <= 0) {
+    const parsedAmount = Number.parseFloat(String(amount));
+
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       return NextResponse.json(
         { error: "Le montant doit être supérieur à 0" },
+        { status: 400 }
+      );
+    }
+
+    // Limiter l'exposition du backend : montant max 10 000 € pour éviter les abus.
+    if (parsedAmount > 10000) {
+      return NextResponse.json(
+        { error: "Montant trop élevé" },
         { status: 400 }
       );
     }
@@ -41,11 +52,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const baseUrl = getBaseUrl();
+
     // Créer le paiement avec Mollie
     const payment = await mollieClient.payments.create({
       amount: {
         currency: "EUR",
-        value: amount.toFixed(2),
+        value: parsedAmount.toFixed(2),
       },
       description: description,
       billingAddress: {
@@ -59,11 +72,8 @@ export async function POST(request: NextRequest) {
       },
       cardToken: cardToken,
       method: PaymentMethod.creditcard,
-      redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/payment/status?id={id}`,
-      webhookUrl:
-        process.env.NODE_ENV === "production"
-          ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/webhook`
-          : undefined,
+      redirectUrl: `${baseUrl}/payment/status`,
+      webhookUrl: `${baseUrl}/api/payments/webhook`,
     });
 
     console.log("✅ Paiement créé:", payment.id);
@@ -75,6 +85,7 @@ export async function POST(request: NextRequest) {
         value: payment.amount.value,
         currency: payment.amount.currency,
       },
+      checkoutUrl: payment._links?.checkout?.href ?? null,
     });
   } catch (error) {
     console.error("❌ Erreur lors de la création du paiement:", error);

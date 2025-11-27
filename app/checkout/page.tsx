@@ -11,6 +11,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [cardError, setCardError] = useState<string | null>(null);
   const [cardMounted, setCardMounted] = useState(false);
+  const [cardRendered, setCardRendered] = useState(false);
 
   const cardComponentRef = useRef<{ mount: (selector: string) => void; unmount: () => void } | null>(null);
 
@@ -75,6 +76,37 @@ export default function CheckoutPage() {
     };
   }, [mollie, cardMounted]);
 
+  // Surface une erreur claire si Mollie ne s'initialise pas (profile ID manquant ou script bloqué)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!cardMounted && !mollie) {
+        setError(
+          "Mollie Components ne s'est pas initialisé. Vérifiez NEXT_PUBLIC_MOLLIE_PROFILE_ID et le chargement de https://js.mollie.com/v1/mollie.js."
+        );
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [cardMounted, mollie]);
+
+  // Vérifie que l'iframe Mollie est réellement injectée (origine non whiteliste -> composant vide)
+  useEffect(() => {
+    if (!cardMounted) return;
+
+    const timer = setTimeout(() => {
+      const frame = document.querySelector("#card-component iframe");
+      if (!frame) {
+        setError(
+          "Le composant carte ne s'affiche pas. Ajoutez le domaine actuel dans les origins autorisées de votre profil Mollie (Dashboard > Developers > Website profiles > Origins)."
+        );
+      } else {
+        setCardRendered(true);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [cardMounted]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -124,7 +156,16 @@ export default function CheckoutPage() {
       console.log("✅ Paiement créé avec succès!");
       console.log("📋 ID du paiement:", data.id);
 
-      // Rediriger vers la page de statut
+      // Mémoriser l'ID avant de partir vers Mollie
+      localStorage.setItem("lastPaymentId", data.id);
+
+      // Priorité au checkout Mollie (3DS)
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      // Fallback: page de statut locale
       router.push(`/payment/status?id=${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");

@@ -22,7 +22,7 @@ export async function validateFormData(formData: FormData) {
     country: z.string().toUpperCase().length(2),
     payment_method: EnumPaymentMethod,
     cardToken: z.string().startsWith("tkn_").optional(),
-    captureMode: z.enum(CaptureMethod).optional(),
+    captureMode: z.nativeEnum(CaptureMethod).optional(),
     currency: z.string().length(3),
     officeId: z.string().optional(),
   });

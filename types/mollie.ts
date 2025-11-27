@@ -1,5 +1,4 @@
-import { CreatePaymentParams } from '@/lib/types';
-import createMollieClient, { Locale, Payment, PaymentLineCategory, PaymentStatus } from '@mollie/api-client';
+import type { Locale, PaymentStatus } from '@mollie/api-client';
 
 export interface PaymentRequest {
   amount: number;
@@ -28,16 +27,6 @@ export interface PaymentStatusResponse {
   description: string;
   paidAt?: string;
 }
-
-const apiKey = process.env.MOLLIE_API_KEY;
-const domain = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-const webhookUrl = process.env.WEBHOOK_URL || 'http://not.provided';
-
-if (!apiKey) {
-    throw new Error('MOLLIE_API_KEY is not defined');
-}
-
-const mollieClient = createMollieClient({ apiKey: apiKey });
 
 const countryToLocale: Record<string, Locale> = {
     DE: Locale.de_DE,

@@ -10,9 +10,13 @@ export const MollieProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const profileId = process.env.NEXT_PUBLIC_MOLLIE_PROFILE_ID;
+    const testModeFlag = process.env.NEXT_PUBLIC_MOLLIE_TESTMODE;
+    const testmode =
+      typeof testModeFlag === "string" ? testModeFlag === "true" : true;
 
     console.log("🔍 MollieContext: Initialisation...");
     console.log("📋 Profile ID:", profileId);
+    console.log("🔍 Test mode:", testmode);
 
     if (!profileId) {
       console.error("❌ NEXT_PUBLIC_MOLLIE_PROFILE_ID n'est pas défini!");
@@ -40,7 +44,7 @@ export const MollieProvider = ({ children }: { children: React.ReactNode }) => {
 
         const mollieInstance = window.Mollie(profileId, {
           locale: "fr_BE",
-          testmode: true,
+          testmode,
         });
 
         console.log("🔍 Instance Mollie créée:", mollieInstance);
