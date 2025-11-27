@@ -4,15 +4,25 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMollie } from "@/lib/MollieContext";
 
+interface ComponentErrors {
+  cardNumber?: string;
+  cardHolder?: string;
+  expiryDate?: string;
+  verificationCode?: string;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { mollie } = useMollie();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cardError, setCardError] = useState<string | null>(null);
   const [cardMounted, setCardMounted] = useState(false);
+  const [componentErrors, setComponentErrors] = useState<ComponentErrors>({});
 
-  const cardComponentRef = useRef<{ mount: (selector: string) => void; unmount: () => void } | null>(null);
+  const cardNumberRef = useRef<any>(null);
+  const cardHolderRef = useRef<any>(null);
+  const expiryDateRef = useRef<any>(null);
+  const verificationCodeRef = useRef<any>(null);
 
   const [formData, setFormData] = useState({
     amount: "10.00",
@@ -28,33 +38,90 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     console.log("📋 CheckoutPage useEffect - mollie:", mollie);
-    console.log("📋 CheckoutPage useEffect - cardMounted:", cardMounted);
 
     if (mollie && !cardMounted) {
       try {
-        console.log("🔍 Instance mollie reçue:", mollie);
-        console.log("🔍 Type de mollie:", typeof mollie);
-        console.log("🔍 Méthodes disponibles:", Object.keys(mollie));
-        console.log("🔍 mollie.createComponent:", typeof mollie.createComponent);
+        console.log("🎨 Création des composants Mollie...");
 
-        if (typeof mollie.createComponent !== "function") {
-          throw new Error("mollie.createComponent n'est pas une fonction!");
-        }
+        // Créer les composants
+        const cardNumber = mollie.createComponent("cardNumber");
+        const cardHolder = mollie.createComponent("cardHolder");
+        const expiryDate = mollie.createComponent("expiryDate");
+        const verificationCode = mollie.createComponent("verificationCode");
 
-        // Créer le composant de carte unique (Option A - Recommandée)
-        console.log("🎨 Création du composant de carte Mollie...");
-        const cardComponent = mollie.createComponent("card");
-        console.log("✅ Composant de carte créé:", cardComponent);
+        // Monter les composants
+        cardNumber.mount("#card-number");
+        cardHolder.mount("#card-holder");
+        expiryDate.mount("#expiry-date");
+        verificationCode.mount("#verification-code");
 
-        // Monter le composant dans la div #card-component
-        console.log("🎯 Montage du composant dans #card-component...");
-        cardComponent.mount("#card-component");
+        // Ajouter les event listeners pour la validation
+        cardNumber.addEventListener("change", (event: any) => {
+          if (event.error && event.touched) {
+            setComponentErrors((prev) => ({
+              ...prev,
+              cardNumber: event.error,
+            }));
+          } else {
+            setComponentErrors((prev) => ({
+              ...prev,
+              cardNumber: undefined,
+            }));
+          }
+        });
 
-        cardComponentRef.current = cardComponent;
+        cardHolder.addEventListener("change", (event: any) => {
+          if (event.error && event.touched) {
+            setComponentErrors((prev) => ({
+              ...prev,
+              cardHolder: event.error,
+            }));
+          } else {
+            setComponentErrors((prev) => ({
+              ...prev,
+              cardHolder: undefined,
+            }));
+          }
+        });
+
+        expiryDate.addEventListener("change", (event: any) => {
+          if (event.error && event.touched) {
+            setComponentErrors((prev) => ({
+              ...prev,
+              expiryDate: event.error,
+            }));
+          } else {
+            setComponentErrors((prev) => ({
+              ...prev,
+              expiryDate: undefined,
+            }));
+          }
+        });
+
+        verificationCode.addEventListener("change", (event: any) => {
+          if (event.error && event.touched) {
+            setComponentErrors((prev) => ({
+              ...prev,
+              verificationCode: event.error,
+            }));
+          } else {
+            setComponentErrors((prev) => ({
+              ...prev,
+              verificationCode: undefined,
+            }));
+          }
+        });
+
+        // Sauvegarder les refs
+        cardNumberRef.current = cardNumber;
+        cardHolderRef.current = cardHolder;
+        expiryDateRef.current = expiryDate;
+        verificationCodeRef.current = verificationCode;
+
         setCardMounted(true);
-        console.log("✅ Composant de carte Mollie monté avec succès");
+        console.log("✅ Tous les composants montés avec event listeners");
       } catch (err) {
-        console.error("❌ Erreur lors du montage du composant de carte:", err);
+        console.error("❌ Erreur lors du montage:", err);
         setError(
           err instanceof Error
             ? err.message
@@ -63,12 +130,13 @@ export default function CheckoutPage() {
       }
     }
 
-    // Cleanup: démonter le composant quand le composant React est démonté
     return () => {
       try {
-        if (cardComponentRef.current) {
-          cardComponentRef.current.unmount();
-        }
+        if (cardNumberRef.current) cardNumberRef.current.unmount();
+        if (cardHolderRef.current) cardHolderRef.current.unmount();
+        if (expiryDateRef.current) expiryDateRef.current.unmount();
+        if (verificationCodeRef.current)
+          verificationCodeRef.current.unmount();
       } catch (err) {
         console.error("Erreur lors du démontage:", err);
       }
@@ -95,7 +163,7 @@ export default function CheckoutPage() {
 
       console.log("✅ Token créé:", token);
 
-      // Envoyer le paiement au serveur avec le token
+      // Envoyer le paiement au serveur
       const response = await fetch("/api/payments/create", {
         method: "POST",
         headers: {
@@ -121,12 +189,12 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Erreur lors de la création du paiement");
       }
 
-      console.log("✅ Paiement créé avec succès!");
-      console.log("📋 ID du paiement:", data.id);
+      console.log("✅ Paiement créé!");
 
       // Rediriger vers la page de statut
       router.push(`/payment/status?id=${data.id}`);
     } catch (err) {
+      console.error("❌ Erreur:", err);
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
       setLoading(false);
     }
@@ -165,7 +233,6 @@ export default function CheckoutPage() {
                   setFormData({ ...formData, amount: e.target.value })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
-                placeholder="10.00"
               />
             </div>
 
@@ -185,7 +252,6 @@ export default function CheckoutPage() {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
-                placeholder="Achat de produit"
               />
             </div>
           </div>
@@ -335,23 +401,85 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Composant de carte Mollie */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Informations de carte bancaire
-            </label>
-            <div
-              id="card-component"
-              className="border-2 border-gray-300 rounded-lg p-4 min-h-[200px] bg-white"
-            ></div>
+          {/* Composants de carte Mollie */}
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="card-number"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Numéro de carte
+              </label>
+              <div
+                id="card-number"
+                className="border-2 border-gray-300 rounded-lg p-3 min-h-[50px] bg-white"
+              ></div>
+              {componentErrors.cardNumber && (
+                <p className="mt-1 text-sm text-red-600">
+                  {componentErrors.cardNumber}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="card-holder"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Nom du titulaire
+              </label>
+              <div
+                id="card-holder"
+                className="border-2 border-gray-300 rounded-lg p-3 min-h-[50px] bg-white"
+              ></div>
+              {componentErrors.cardHolder && (
+                <p className="mt-1 text-sm text-red-600">
+                  {componentErrors.cardHolder}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="expiry-date"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Date d&apos;expiration
+                </label>
+                <div
+                  id="expiry-date"
+                  className="border-2 border-gray-300 rounded-lg p-3 min-h-[50px] bg-white"
+                ></div>
+                {componentErrors.expiryDate && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {componentErrors.expiryDate}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="verification-code"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Code de sécurité (CVV)
+                </label>
+                <div
+                  id="verification-code"
+                  className="border-2 border-gray-300 rounded-lg p-3 min-h-[50px] bg-white"
+                ></div>
+                {componentErrors.verificationCode && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {componentErrors.verificationCode}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {!cardMounted && !error && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Chargement du formulaire de carte...
-              </p>
-            )}
-            {cardError && (
-              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                {cardError}
               </p>
             )}
           </div>

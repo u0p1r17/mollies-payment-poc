@@ -1,4 +1,5 @@
-import { PaymentStatus } from '@mollie/api-client';
+import { CreatePaymentParams } from '@/lib/types';
+import createMollieClient, { Locale, Payment, PaymentLineCategory, PaymentStatus } from '@mollie/api-client';
 
 export interface PaymentRequest {
   amount: number;
@@ -27,3 +28,124 @@ export interface PaymentStatusResponse {
   description: string;
   paidAt?: string;
 }
+
+const apiKey = process.env.MOLLIE_API_KEY;
+const domain = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+const webhookUrl = process.env.WEBHOOK_URL || 'http://not.provided';
+
+if (!apiKey) {
+    throw new Error('MOLLIE_API_KEY is not defined');
+}
+
+const mollieClient = createMollieClient({ apiKey: apiKey });
+
+const countryToLocale: Record<string, Locale> = {
+    DE: Locale.de_DE,
+    AT: Locale.de_AT,
+    NL: Locale.nl_NL,
+    FR: Locale.fr_FR,
+    BE: Locale.fr_BE,
+    UK: Locale.en_US,
+    SE: Locale.sv_SE,
+    PT: Locale.pt_PT,
+    IT: Locale.it_IT,
+    CH: Locale.de_CH,
+    ES: Locale.es_ES,
+};
+
+function getLocaleForCountry(country: string): Locale {
+    let locale = countryToLocale[country];
+    if (!locale) {
+        locale = Locale.fr_BE;
+    }
+    return locale;
+}
+
+// export async function mollieCreatePayment({
+//     firstname,
+//     lastname,
+//     company,
+//     email,
+//     address,
+//     city,
+//     zip_code,
+//     country,
+//     payment_method,
+//     cardToken,
+//     captureMode,
+//     currency,
+//     officeId,
+// }: CreatePaymentParams) {
+//     const payment: Payment = await mollieClient.payments.create({
+//         amount: {
+//             currency: currency,
+//             value: '220.00',
+//         },
+//         billingAddress: {
+//             givenName: firstname,
+//             familyName: lastname,
+//             organizationName: company,
+//             streetAndNumber: address,
+//             postalCode: zip_code,
+//             city: city,
+//             country: country,
+//             email: email,
+//         },
+//         metadata: {
+//             officeId: officeId,
+//             internal_payment_id: 'mollie-next-' + Date.now(),
+//         },
+//         lines: [
+//             {
+//                 description: 'An expensive product',
+//                 quantity: 1,
+//                 unitPrice: {
+//                     currency: currency,
+//                     value: '200.00',
+//                 },
+//                 totalAmount: {
+//                     currency: currency,
+//                     value: '200.00',
+//                 },
+//             },
+//             {
+//                 description: 'A cheap product',
+//                 quantity: 1,
+//                 unitPrice: {
+//                     currency: currency,
+//                     value: '10.00',
+//                 },
+//                 totalAmount: {
+//                     currency: currency,
+//                     value: '10.00',
+//                 },
+//                 // categories for voucher payments
+//                 categories: [PaymentLineCategory.gift, PaymentLineCategory.eco],
+//             },
+//             {
+//                 description: 'Another cheap product',
+//                 quantity: 1,
+//                 unitPrice: {
+//                     currency: currency,
+//                     value: '10.00',
+//                 },
+//                 totalAmount: {
+//                     currency: currency,
+//                     value: '10.00',
+//                 },
+//                 // categories for voucher payments
+//                 categories: [PaymentLineCategory.gift, PaymentLineCategory.eco],
+//             },
+//         ],
+//         description: 'Demo payment from ' + firstname,
+//         redirectUrl: domain + '/success',
+//         cancelUrl: domain,
+//         webhookUrl: webhookUrl,
+//         method: payment_method,
+//         cardToken: cardToken,
+//         captureMode: captureMode,
+//         locale: getLocaleForCountry(country),
+//     });
+//     const redirectUrl = payment.getCheckoutUrl();
+//     return redirectUrl;
+// }

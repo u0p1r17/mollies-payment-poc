@@ -1,83 +1,90 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { mollieClient } from '@/lib/mollie';
-import { getBaseUrl, isLocalhost } from '@/lib/url';
-import type { PaymentRequest, PaymentResponse } from '@/types/mollie';
-import type { PaymentCreateParams } from '@mollie/api-client';
+import { NextRequest, NextResponse } from "next/server";
+import { mollieClient } from "@/lib/mollie";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: PaymentRequest = await request.json();
+    const body = await request.json();
 
-    const { amount, description, customerEmail, customerName } = body;
+    const {
+      amount,
+      description,
+      firstname,
+      lastname,
+      email,
+      address,
+      city,
+      zipCode,
+      country,
+      cardToken,
+    } = body;
 
-    // Validation
+    // Validation basique
     if (!amount || amount <= 0) {
       return NextResponse.json(
-        { error: 'Le montant doit être supérieur à 0' },
+        { error: "Le montant doit être supérieur à 0" },
         { status: 400 }
       );
     }
 
     if (!description) {
       return NextResponse.json(
-        { error: 'La description est requise' },
+        { error: "La description est requise" },
         { status: 400 }
       );
     }
 
-    // Créer le paiement Mollie
-    const baseUrl = getBaseUrl();
-    const isLocal = isLocalhost(baseUrl);
+    if (!cardToken || !cardToken.startsWith("tkn_")) {
+      return NextResponse.json(
+        { error: "Token de carte invalide" },
+        { status: 400 }
+      );
+    }
 
-    const paymentData: PaymentCreateParams = {
+    // Créer le paiement avec Mollie
+    const payment = await mollieClient.payments.create({
       amount: {
-        currency: 'EUR',
+        currency: "EUR",
         value: amount.toFixed(2),
       },
-      description,
-      redirectUrl: `${baseUrl}/payment/status?id={id}`,
-      metadata: {
-        customerEmail: customerEmail || '',
-        customerName: customerName || '',
+      description: description,
+      billingAddress: {
+        givenName: firstname,
+        familyName: lastname,
+        email: email,
+        streetAndNumber: address,
+        city: city,
+        postalCode: zipCode,
+        country: country,
       },
-    };
-
-    // Only add webhook in production (not on localhost)
-    if (!isLocal) {
-      paymentData.webhookUrl = `${baseUrl}/api/payments/webhook`;
-    }
-
-    const payment = await mollieClient.payments.create(paymentData);
-
-    // Debug: afficher les détails du paiement
-    console.log('Payment créé:', {
-      id: payment.id,
-      status: payment.status,
-      checkoutUrl: payment.getCheckoutUrl(),
-      _links: payment._links
+      cardToken: cardToken,
+      method: "creditcard",
+      redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/payment/status?id={id}`,
+      webhookUrl:
+        process.env.NODE_ENV === "production"
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/webhook`
+          : undefined,
     });
 
-    const checkoutUrl = payment.getCheckoutUrl();
-    if (!checkoutUrl) {
-      console.error('❌ Pas de checkout URL dans la réponse Mollie!');
-      console.error('Payment object:', JSON.stringify(payment, null, 2));
-    }
+    console.log("✅ Paiement créé:", payment.id);
 
-    const response: PaymentResponse = {
+    return NextResponse.json({
       id: payment.id,
       status: payment.status,
-      checkoutUrl: checkoutUrl || '',
       amount: {
         value: payment.amount.value,
         currency: payment.amount.currency,
       },
-    };
-
-    return NextResponse.json(response);
+    });
   } catch (error) {
-    console.error('Erreur lors de la création du paiement:', error);
+    console.error("❌ Erreur lors de la création du paiement:", error);
+
     return NextResponse.json(
-      { error: 'Erreur lors de la création du paiement' },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la création du paiement",
+      },
       { status: 500 }
     );
   }

@@ -5,6 +5,7 @@ export default function Home() {
   const baseUrl = getBaseUrl();
   const isProduction = !isLocalhost(baseUrl);
 
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 font-sans">
       <div className="text-center max-w-2xl px-4">
