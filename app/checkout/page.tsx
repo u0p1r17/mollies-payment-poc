@@ -8,7 +8,7 @@ import CheckoutButton from "../components/checkoutButton";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [error, _] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<NullableCreatePaymentParams>({
     amount: "10.00",
     firstname: "Jean",
@@ -81,7 +81,7 @@ export default function CheckoutPage() {
                 required
                 value={formData.amount ?? ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
+                  setFormData({ ...formData, amount: e.target.value.toString() })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
                 placeholder="10.00"

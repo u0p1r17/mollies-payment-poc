@@ -13,10 +13,8 @@ if (!apiKey) {
   throw new Error("MOLLIE_API_KEY is not defined");
 }
 
-// Set up Mollie API client
 export const mollieClient = createMollieClient({ apiKey: apiKey });
 
-// translate countries to locales
 const countryToLocale: Record<string, Locale> = {
   DE: Locale.de_DE,
   AT: Locale.de_AT,
@@ -32,16 +30,14 @@ const countryToLocale: Record<string, Locale> = {
   BENL: Locale.fr_BE,
 };
 
-// function to get the locale for a given country
 function getLocaleForCountry(country: string): Locale {
   let locale = countryToLocale[country];
   if (!locale) {
-    locale = Locale.fr_BE; // default to French (Belgium) if country is not found
+    locale = Locale.fr_BE;
   }
   return locale;
 }
 
-// Create a payment using data gathered from the checkout form
 export async function mollieCreatePayment({
   amount,
   firstname,
@@ -54,11 +50,6 @@ export async function mollieCreatePayment({
   country,
   metadata,
 }: CreatePaymentParams) {
-  // Note: We allow beta payment methods to be sent to the API
-  // The Mollie API will handle validation and return appropriate errors if needed
-  // This allows testing of beta payment methods that aren't in the TypeScript client yet
-
-  // set up the actual payment with mollie library
   const payment: Payment = await mollieClient.payments.create({
     amount: {
       currency: "EUR",
@@ -89,6 +80,6 @@ export async function mollieCreatePayment({
   return redirectUrl;
 }
 export async function mollieGetPayments() {
-    const payments = await mollieClient.payments.page();
-    return payments;
+  const payments = await mollieClient.payments.page();
+  return payments;
 }

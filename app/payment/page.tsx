@@ -1,9 +1,8 @@
 "use client";
 import { readFromDB } from "@/lib/server-actions";
 import { Payment } from "@mollie/api-client";
-import React, { JSX, useEffect, useMemo, useRef } from "react";
-import { Metadata, NullableMetatdata } from "@/lib/types";
-import { set } from "zod";
+import React, { useEffect } from "react";
+import { Metadata } from "@/lib/types";
 
 type PaymentCustom = Omit<Payment, "metadata"> & {
   metadata: Metadata;
@@ -11,36 +10,49 @@ type PaymentCustom = Omit<Payment, "metadata"> & {
 
 export default function Page() {
   const [payments, setPayments] = React.useState<PaymentCustom[]>([]);
-  const [filter, setFilter] = React.useState({
-    officeId: "",
-    tenantId: "",
-    productId: "",
-  });
+  const [filter, setFilter] = React.useState(initFilter());
 
+  function initFilter() {
+    return {
+      officeId: "",
+      tenantId: "",
+      productId: "",
+    };
+  }
+  
   useEffect(() => {
     readFromDB().then((data) => {
       setPayments(data);
     });
     //
+    return () => {
+      setPayments([]);
+      setFilter(initFilter());
+    };
   }, []);
+  
   useEffect(() => {
     readFromDB().then((data) => {
       const tmp = data
-      .filter((payment)=>{
-        return  filter.officeId === "0" || "" ? payment : payment.metadata.officeId.includes(filter.officeId)
-      })
-      .filter((payment)=>{
-        return  filter.tenantId === "0" || "" ? payment : payment.metadata.tenantId.includes(filter.tenantId)
-      })
-      .filter((payment)=>{
-        return  filter.tenantId === "0" || "" ? payment : payment.metadata.tenantId.includes(filter.tenantId)
-      });
-      setPayments(tmp)
+        .filter((payment) => {
+          return filter.officeId === "0" || ""
+            ? payment
+            : payment.metadata.officeId.includes(filter.officeId);
+        })
+        .filter((payment) => {
+          return filter.tenantId === "0" || ""
+            ? payment
+            : payment.metadata.tenantId.includes(filter.tenantId);
+        })
+        .filter((payment) => {
+          return filter.tenantId === "0" || ""
+            ? payment
+            : payment.metadata.tenantId.includes(filter.tenantId);
+        });
+      setPayments(tmp);
     });
     //
   }, [filter]);
-
-
 
   const displayPayments = payments.map((payment) => (
     <div key={payment.id} className="border-b border-gray-300 py-4">
@@ -74,9 +86,6 @@ export default function Page() {
       ...prev,
       [subject]: value,
     }));
-  };
-  const labelise = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).replace("Id", "");
   };
 
   return (

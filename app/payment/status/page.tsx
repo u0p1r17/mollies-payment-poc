@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { PaymentStatusResponse } from '@/types/mollie';
+import type { PaymentStatusResponse } from '@/lib/types';
 
 function PaymentStatusContent() {
   const router = useRouter();
@@ -14,17 +14,12 @@ function PaymentStatusContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Déterminer quel ID utiliser
     let paymentId = urlPaymentId;
 
-    // Si l'ID dans l'URL est manquant ou est le placeholder {id},
-    // utiliser l'ID du localStorage
     if (!paymentId || paymentId === '{id}') {
       const storedId = localStorage.getItem('lastPaymentId');
       if (storedId) {
-        console.log('✅ ID récupéré depuis le localStorage:', storedId);
         paymentId = storedId;
-        // Nettoyer le localStorage après utilisation
         localStorage.removeItem('lastPaymentId');
       } else {
         setError('ID de paiement manquant. Veuillez créer un nouveau paiement.');

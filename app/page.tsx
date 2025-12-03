@@ -1,11 +1,9 @@
 "use client";
 import Link from "next/link";
-import { getBaseUrl} from "@/lib/url";
 import { syncronizePaymentsWithMollie } from "@/lib/server-actions";
 import { useEffect } from "react";
 
 export default function Home() {
-  const baseUrl = getBaseUrl();
 
   useEffect(() => {
     syncronizePaymentsWithMollie();

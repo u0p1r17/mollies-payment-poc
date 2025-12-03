@@ -1,4 +1,4 @@
-import { CaptureMethod, PaymentMethod } from "@mollie/api-client";
+import { PaymentMethod } from "@mollie/api-client";
 import z from "zod";
 
 export type MollieComponent = {
@@ -66,41 +66,38 @@ export type CreateFormPayment = Omit<
   "currency" | "description" | "payment_method" | "captureMode"
 >;
 
-// export interface CreateFormPayment {
-  //   amount: string;
-  //   description: string;
-//   firstname: string;
-//   lastname: string;
-//   email: string;
-//   address: string;
-//   city: string;
-//   zipCode: string;
-//   country: string;
-//   payment_method: PaymentMethod.banktransfer;
-//   currency: string;
-//   company?: string;
-//   captureMode?: CaptureMethod;
-//   metadata: Metadata;
-// }
-
 export type NullableCreateFormPayment = Omit<
   NullableCreatePaymentParams,
   "currency" | "description" | "payment_method" | "captureMode"
 >;
 
-// export interface NullableCreateFormPayment {
-  //   amount: string | null;
-//   description: string | null;
-//   firstname: string | null;
-//   lastname: string | null;
-//   company?: string | null;
-//   email: string | null;
-//   address: string | null;
-//   city: string | null;
-//   zipCode: string | null;
-//   country: string | null;
-//   payment_method: PaymentMethod | null;
-//   captureMode?: CaptureMethod | null;
-//   currency: string | null;
-//   metadata: NullableMetatdata;
-// }
+import type { PaymentStatus } from '@mollie/api-client';
+
+export interface PaymentRequest {
+  amount: number;
+  description: string;
+  customerEmail?: string;
+  customerName?: string;
+}
+
+export interface PaymentResponse {
+  id: string;
+  status: PaymentStatus;
+  checkoutUrl: string;
+  amount: {
+    value: string;
+    currency: string;
+  };
+}
+
+export interface PaymentStatusResponse {
+  id: string;
+  status: PaymentStatus;
+  amount: {
+    value: string;
+    currency: string;
+  };
+  description: string;
+  paidAt?: string;
+}
+

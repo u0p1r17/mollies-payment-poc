@@ -576,6 +576,265 @@
           "type": "text/html"
         }
       }
+    },
+    {
+      "resource": "payment",
+      "id": "tr_zk6vkcFK5PrToqbYJ7qHJ",
+      "mode": "test",
+      "createdAt": "2025-12-03T15:09:08+00:00",
+      "amount": {
+        "value": "10.00",
+        "currency": "EUR"
+      },
+      "description": "Demo payment from Jean",
+      "method": "bancontact",
+      "metadata": {
+        "internal_payment_id": "mollie-next-1764774548370",
+        "officeId": "1",
+        "tenantId": "2",
+        "productId": "3"
+      },
+      "status": "open",
+      "isCancelable": false,
+      "expiresAt": "2025-12-03T16:09:08+00:00",
+      "locale": "fr_BE",
+      "countryCode": "BE",
+      "profileId": "pfl_Yw9oECFEzb",
+      "sequenceType": "oneoff",
+      "redirectUrl": "http://localhost:3000/",
+      "cancelUrl": "http://localhost:3000",
+      "webhookUrl": "http://not.provided",
+      "settlementAmount": {
+        "value": "10.00",
+        "currency": "EUR"
+      },
+      "billingAddress": {
+        "streetAndNumber": "Rue de Test 123",
+        "postalCode": "1000",
+        "city": "Bruxelles",
+        "country": "BE",
+        "givenName": "Jean",
+        "familyName": "Neymar",
+        "email": "jean@neymar.com"
+      },
+      "_links": {
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_zk6vkcFK5PrToqbYJ7qHJ",
+          "type": "application/hal+json"
+        },
+        "checkout": {
+          "href": "https://www.mollie.com/checkout/test-mode?method=mistercash&token=6.urjb7p",
+          "type": "text/html"
+        },
+        "dashboard": {
+          "href": "https://my.mollie.com/dashboard/org_19388674/payments/tr_zk6vkcFK5PrToqbYJ7qHJ",
+          "type": "text/html"
+        }
+      }
+    },
+    {
+      "resource": "payment",
+      "id": "tr_zz5Szdb2HwXBrMUPk9qHJ",
+      "mode": "test",
+      "createdAt": "2025-12-03T15:33:04+00:00",
+      "amount": {
+        "value": "34.00",
+        "currency": "EUR"
+      },
+      "description": "Demo payment from Jean",
+      "method": "bancontact",
+      "metadata": {
+        "internal_payment_id": "mollie-next-1764775984494",
+        "officeId": "1",
+        "tenantId": "2",
+        "productId": "3"
+      },
+      "status": "paid",
+      "paidAt": "2025-12-03T15:33:08+00:00",
+      "amountRefunded": {
+        "value": "0.00",
+        "currency": "EUR"
+      },
+      "amountRemaining": {
+        "value": "34.00",
+        "currency": "EUR"
+      },
+      "locale": "fr_BE",
+      "countryCode": "BE",
+      "profileId": "pfl_Yw9oECFEzb",
+      "sequenceType": "oneoff",
+      "redirectUrl": "http://localhost:3000/",
+      "cancelUrl": "http://localhost:3000",
+      "webhookUrl": "http://not.provided",
+      "settlementAmount": {
+        "value": "34.00",
+        "currency": "EUR"
+      },
+      "billingAddress": {
+        "streetAndNumber": "Rue de Test 123",
+        "postalCode": "1000",
+        "city": "Bruxelles",
+        "country": "BE",
+        "givenName": "Jean",
+        "familyName": "Neymar",
+        "email": "jean@neymar.com"
+      },
+      "details": {
+        "cardNumber": "6787",
+        "consumerName": null,
+        "consumerAccount": "BE62510007547061",
+        "consumerBic": "GEBABEBB"
+      },
+      "_links": {
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_zz5Szdb2HwXBrMUPk9qHJ",
+          "type": "application/hal+json"
+        },
+        "dashboard": {
+          "href": "https://my.mollie.com/dashboard/org_19388674/payments/tr_zz5Szdb2HwXBrMUPk9qHJ",
+          "type": "text/html"
+        },
+        "changePaymentState": {
+          "href": "https://www.mollie.com/checkout/test-mode?method=mistercash&token=6.uao292",
+          "type": "text/html"
+        }
+      }
+    },
+    {
+      "resource": "payment",
+      "id": "tr_yA8t7DQrWDQCQyEbd7qHJ",
+      "mode": "test",
+      "createdAt": "2025-12-03T15:12:24+00:00",
+      "amount": {
+        "value": "20.00",
+        "currency": "EUR"
+      },
+      "description": "Demo payment from Jean",
+      "method": "bancontact",
+      "metadata": {
+        "internal_payment_id": "mollie-next-1764774743912",
+        "officeId": "1",
+        "tenantId": "3",
+        "productId": "2"
+      },
+      "status": "paid",
+      "paidAt": "2025-12-03T15:12:28+00:00",
+      "amountRefunded": {
+        "value": "0.00",
+        "currency": "EUR"
+      },
+      "amountRemaining": {
+        "value": "20.00",
+        "currency": "EUR"
+      },
+      "locale": "fr_BE",
+      "countryCode": "BE",
+      "profileId": "pfl_Yw9oECFEzb",
+      "sequenceType": "oneoff",
+      "redirectUrl": "http://localhost:3000/",
+      "cancelUrl": "http://localhost:3000",
+      "webhookUrl": "http://not.provided",
+      "settlementAmount": {
+        "value": "20.00",
+        "currency": "EUR"
+      },
+      "billingAddress": {
+        "streetAndNumber": "Rue de Test 123",
+        "postalCode": "1000",
+        "city": "Bruxelles",
+        "country": "BE",
+        "givenName": "Jean",
+        "familyName": "Neymar",
+        "email": "jean@neymar.com"
+      },
+      "details": {
+        "cardNumber": "6787",
+        "consumerName": null,
+        "consumerAccount": "BE62510007547061",
+        "consumerBic": "GEBABEBB"
+      },
+      "_links": {
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_yA8t7DQrWDQCQyEbd7qHJ",
+          "type": "application/hal+json"
+        },
+        "dashboard": {
+          "href": "https://my.mollie.com/dashboard/org_19388674/payments/tr_yA8t7DQrWDQCQyEbd7qHJ",
+          "type": "text/html"
+        },
+        "changePaymentState": {
+          "href": "https://www.mollie.com/checkout/test-mode?method=mistercash&token=6.ps92va",
+          "type": "text/html"
+        }
+      }
+    },
+    {
+      "resource": "payment",
+      "id": "tr_7UuDaHV55pyHkWp9iAqHJ",
+      "mode": "test",
+      "createdAt": "2025-12-03T15:42:27+00:00",
+      "amount": {
+        "value": "85.00",
+        "currency": "EUR"
+      },
+      "description": "Demo payment from Jean",
+      "method": "bancontact",
+      "metadata": {
+        "internal_payment_id": "mollie-next-1764776546876",
+        "officeId": "2",
+        "tenantId": "1",
+        "productId": "3"
+      },
+      "status": "paid",
+      "paidAt": "2025-12-03T15:42:37+00:00",
+      "amountRefunded": {
+        "value": "0.00",
+        "currency": "EUR"
+      },
+      "amountRemaining": {
+        "value": "85.00",
+        "currency": "EUR"
+      },
+      "locale": "fr_BE",
+      "countryCode": "BE",
+      "profileId": "pfl_Yw9oECFEzb",
+      "sequenceType": "oneoff",
+      "redirectUrl": "http://localhost:3000/",
+      "cancelUrl": "http://localhost:3000",
+      "webhookUrl": "http://not.provided",
+      "settlementAmount": {
+        "value": "85.00",
+        "currency": "EUR"
+      },
+      "billingAddress": {
+        "streetAndNumber": "Rue de Test 123",
+        "postalCode": "1000",
+        "city": "Bruxelles",
+        "country": "BE",
+        "givenName": "Jean",
+        "familyName": "Neymar",
+        "email": "jean@neymar.com"
+      },
+      "details": {
+        "cardNumber": "6787",
+        "consumerName": null,
+        "consumerAccount": "BE62510007547061",
+        "consumerBic": "GEBABEBB"
+      },
+      "_links": {
+        "self": {
+          "href": "https://api.mollie.com/v2/payments/tr_7UuDaHV55pyHkWp9iAqHJ",
+          "type": "application/hal+json"
+        },
+        "dashboard": {
+          "href": "https://my.mollie.com/dashboard/org_19388674/payments/tr_7UuDaHV55pyHkWp9iAqHJ",
+          "type": "text/html"
+        },
+        "changePaymentState": {
+          "href": "https://www.mollie.com/checkout/test-mode?method=mistercash&token=6.pm5dpj",
+          "type": "text/html"
+        }
+      }
     }
   ]
 }

@@ -1,20 +1,11 @@
 "use server";
 import fs from "fs";
 import path from "path";
-import { CaptureMethod, PaymentMethod, Payment } from "@mollie/api-client";
+import { Payment } from "@mollie/api-client";
 import { validateFormData, validateUrl } from "./validation";
-// import { mollieCreatePayment } from "@/types/mollie";
-import z from "zod";
 import { redirect } from "next/navigation";
 import { mollieCreatePayment, mollieGetPayments } from "./mollie";
 import { Metadata } from "./types";
-
-
-// export const EnumPaymentMethod = z.enum([
-//   ...Object.values(PaymentMethod),
-// ] as const);
-
-// export type EnumPaymentMethodType = z.infer<typeof EnumPaymentMethod>;
 
 export async function createPayment(formData: FormData) {
   const validatedForm: {
@@ -45,16 +36,12 @@ export async function createPayment(formData: FormData) {
 
 export async function addToDB(payload: string) {
   const dbPath = path.join(process.cwd(), "DB", "payment.json");
-  
-  // Lire le fichier existant
   const fileContent = fs.readFileSync(dbPath, "utf-8");
   const db = JSON.parse(fileContent);
-  
-  // Ajouter le nouveau paiement au tableau
   const newPayment = JSON.parse(payload);
+
   db.payments.push(newPayment);
   
-  // Écrire le fichier mis à jour
   fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 }
 
@@ -67,27 +54,18 @@ export async function readFromDB(): Promise<PaymentCustom[]> {
 
 export async function syncronizePaymentsWithMollie() {
   const dbPath = path.join(process.cwd(), "DB", "payment.json");
-  
-  // Lire la base de données locale
   const dbPayments = await readFromDB();
-  
-  // Récupérer les paiements de Mollie
   const molliePayments = await mollieGetPayments();
-  
-  // Comparer et ajouter les nouveaux paiements
   const newPayments = molliePayments.filter(
     molliePayment => !dbPayments.some((dbPayment: PaymentCustom) => dbPayment.id === molliePayment.id)
   );
   
   if (newPayments.length > 0) {
-    // Lire le fichier complet
     const fileContent = fs.readFileSync(dbPath, "utf-8");
     const db = JSON.parse(fileContent);
     
-    // Ajouter les nouveaux paiements
     db.payments.push(...newPayments);
     
-    // Écrire le fichier mis à jour
     fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
   }
   
