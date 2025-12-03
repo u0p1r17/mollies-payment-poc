@@ -1,23 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMollie } from "@/lib/MollieContext";
+import { NullableCreatePaymentParams } from "@/lib/types";
+import Select from "../components/Select";
+import CheckoutButton from "../components/checkoutButton";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { mollie } = useMollie();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cardError, setCardError] = useState<string | null>(null);
-  const [cardMounted, setCardMounted] = useState(false);
-  const [cardRendered, setCardRendered] = useState(false);
-
-  const cardComponentRef = useRef<{ mount: (selector: string) => void; unmount: () => void } | null>(null);
-
-  const [formData, setFormData] = useState({
+  const [error, _] = useState<string | null>(null);
+  const [formData, setFormData] = useState<NullableCreatePaymentParams>({
     amount: "10.00",
-    description: "Achat de test",
     firstname: "Jean",
     lastname: "Neymar",
     email: "jean@neymar.com",
@@ -25,153 +18,36 @@ export default function CheckoutPage() {
     city: "Bruxelles",
     zipCode: "1000",
     country: "BE",
+    company: "",
+    metadata: {
+      officeId: "",
+      tenantId: "",
+      productId: "",
+    },
   });
 
-  useEffect(() => {
-    console.log("📋 CheckoutPage useEffect - mollie:", mollie);
-    console.log("📋 CheckoutPage useEffect - cardMounted:", cardMounted);
-
-    if (mollie && !cardMounted) {
-      try {
-        console.log("🔍 Instance mollie reçue:", mollie);
-        console.log("🔍 Type de mollie:", typeof mollie);
-        console.log("🔍 Méthodes disponibles:", Object.keys(mollie));
-        console.log("🔍 mollie.createComponent:", typeof mollie.createComponent);
-
-        if (typeof mollie.createComponent !== "function") {
-          throw new Error("mollie.createComponent n'est pas une fonction!");
-        }
-
-        // Créer le composant de carte unique (Option A - Recommandée)
-        console.log("🎨 Création du composant de carte Mollie...");
-        const cardComponent = mollie.createComponent("card");
-        console.log("✅ Composant de carte créé:", cardComponent);
-
-        // Monter le composant dans la div #card-component
-        console.log("🎯 Montage du composant dans #card-component...");
-        cardComponent.mount("#card-component");
-
-        cardComponentRef.current = cardComponent;
-        setCardMounted(true);
-        console.log("✅ Composant de carte Mollie monté avec succès");
-      } catch (err) {
-        console.error("❌ Erreur lors du montage du composant de carte:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Impossible de charger le formulaire de paiement"
-        );
-      }
-    }
-
-    // Cleanup: démonter le composant quand le composant React est démonté
-    return () => {
-      try {
-        if (cardComponentRef.current) {
-          cardComponentRef.current.unmount();
-        }
-      } catch (err) {
-        console.error("Erreur lors du démontage:", err);
-      }
-    };
-  }, [mollie, cardMounted]);
-
-  // Surface une erreur claire si Mollie ne s'initialise pas (profile ID manquant ou script bloqué)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!cardMounted && !mollie) {
-        setError(
-          "Mollie Components ne s'est pas initialisé. Vérifiez NEXT_PUBLIC_MOLLIE_PROFILE_ID et le chargement de https://js.mollie.com/v1/mollie.js."
-        );
-      }
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [cardMounted, mollie]);
-
-  // Vérifie que l'iframe Mollie est réellement injectée (origine non whiteliste -> composant vide)
-  useEffect(() => {
-    if (!cardMounted) return;
-
-    const timer = setTimeout(() => {
-      const frame = document.querySelector("#card-component iframe");
-      if (!frame) {
-        setError(
-          "Le composant carte ne s'affiche pas. Ajoutez le domaine actuel dans les origins autorisées de votre profil Mollie (Dashboard > Developers > Website profiles > Origins)."
-        );
-      } else {
-        setCardRendered(true);
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [cardMounted]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      if (!mollie) {
-        throw new Error("Mollie n'est pas encore chargé");
-      }
-
-      // Créer le token de carte
-      console.log("🔐 Création du token de carte...");
-      const { token, error: tokenError } = await mollie.createToken();
-
-      if (tokenError || !token) {
-        throw new Error(tokenError || "Erreur lors de la création du token");
-      }
-
-      console.log("✅ Token créé:", token);
-
-      // Envoyer le paiement au serveur avec le token
-      const response = await fetch("/api/payments/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: parseFloat(formData.amount),
-          description: formData.description,
-          firstname: formData.firstname,
-          lastname: formData.lastname,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          zipCode: formData.zipCode,
-          country: formData.country,
-          cardToken: token,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erreur lors de la création du paiement");
-      }
-
-      console.log("✅ Paiement créé avec succès!");
-      console.log("📋 ID du paiement:", data.id);
-
-      // Mémoriser l'ID avant de partir vers Mollie
-      localStorage.setItem("lastPaymentId", data.id);
-
-      // Priorité au checkout Mollie (3DS)
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-        return;
-      }
-
-      // Fallback: page de statut locale
-      router.push(`/payment/status?id=${data.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
-      setLoading(false);
-    }
+  const handleSelectChange = (value: string, subject: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      metadata: {
+        ...prev.metadata,
+        [subject]: value,
+      },
+    }));
   };
+
+  const displaySelectTags = Object.keys(formData.metadata).map(
+    (key: string) => {
+      return (
+        <Select
+          key={key}
+          subject={key}
+          onChange={handleSelectChange}
+          valueOptions={["1", "2", "3"]}
+        />
+      );
+    }
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -185,9 +61,10 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Montant et Description */}
+        <form id="form_payment" className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
+            {displaySelectTags ?? null}
+
             <div>
               <label
                 htmlFor="amount"
@@ -198,35 +75,16 @@ export default function CheckoutPage() {
               <input
                 type="number"
                 id="amount"
+                name="amount"
                 step="0.01"
                 min="0.01"
                 required
-                value={formData.amount}
+                value={formData.amount ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, amount: e.target.value })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
                 placeholder="10.00"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Description
-              </label>
-              <input
-                type="text"
-                id="description"
-                required
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
-                placeholder="Achat de produit"
               />
             </div>
           </div>
@@ -243,8 +101,9 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 id="firstname"
+                name="firstname"
                 required
-                value={formData.firstname}
+                value={formData.firstname ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, firstname: e.target.value })
                 }
@@ -262,8 +121,9 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 id="lastname"
+                name="lastname"
                 required
-                value={formData.lastname}
+                value={formData.lastname ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, lastname: e.target.value })
                 }
@@ -283,8 +143,9 @@ export default function CheckoutPage() {
             <input
               type="email"
               id="email"
+              name="email"
               required
-              value={formData.email}
+              value={formData.email ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
@@ -303,8 +164,9 @@ export default function CheckoutPage() {
             <input
               type="text"
               id="address"
+              name="address"
               required
-              value={formData.address}
+              value={formData.address ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
               }
@@ -324,8 +186,9 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 id="city"
+                name="city"
                 required
-                value={formData.city}
+                value={formData.city ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, city: e.target.value })
                 }
@@ -343,8 +206,9 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 id="zipCode"
+                name="zipCode"
                 required
-                value={formData.zipCode}
+                value={formData.zipCode ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, zipCode: e.target.value })
                 }
@@ -361,8 +225,9 @@ export default function CheckoutPage() {
               </label>
               <select
                 id="country"
+                name="country"
                 required
-                value={formData.country}
+                value={formData.country ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, country: e.target.value })
                 }
@@ -376,66 +241,12 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Composant de carte Mollie */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Informations de carte bancaire
-            </label>
-            <div
-              id="card-component"
-              className="border-2 border-gray-300 rounded-lg p-4 min-h-[200px] bg-white"
-            ></div>
-            {!cardMounted && !error && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Chargement du formulaire de carte...
-              </p>
-            )}
-            {cardError && (
-              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                {cardError}
-              </p>
-            )}
-          </div>
-
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
-
-          <button
-            type="submit"
-            disabled={loading || !cardMounted}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Traitement...
-              </span>
-            ) : (
-              "Payer maintenant"
-            )}
-          </button>
+          <CheckoutButton />
         </form>
 
         <button

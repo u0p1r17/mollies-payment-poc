@@ -42,11 +42,11 @@ export async function GET(request: NextRequest) {
       description: payment.description,
       paidAt: payment.paidAt || undefined,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Erreur lors de la récupération du paiement:", error);
 
     // Gérer les erreurs 404 de Mollie
-    if (error.statusCode === 404) {
+    if (typeof error === "object" && error !== null && "statusCode" in error && (error as { statusCode: number }).statusCode === 404) {
       return NextResponse.json(
         { error: "Paiement non trouvé" },
         { status: 404 }

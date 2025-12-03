@@ -1,30 +1,52 @@
-import { CaptureMethod, PaymentMethod } from "@mollie/api-client";
 import z from "zod";
-import { EnumPaymentMethod } from "./server-actions";
 
 export async function validateFormData(formData: FormData) {
   const form = Object.fromEntries(formData.entries());
 
   const formSchema = z.object({
+    amount: z.string().min(1, { message: "Amount is required." }),
     firstname: z
       .string()
-      .min(1, { error: "Must be at lest 1 character long," }),
-    lastname: z.string().min(1, { error: "Must be at lest 1 character long," }),
+      .min(1, { message: "Must be at least 1 character long." }),
+    lastname: z.string().min(1, { message: "Must be at least 1 character long." }),
     company: z.string().optional(),
-    email: z.email({ error: "Must Be valid email adress." }),
+    email: z.string().email({ message: "Must be a valid email address." }),
     address: z
       .string()
       .min(1, { message: "Must be at least 1 character long." }),
     city: z.string().min(1, { message: "Must be at least 1 character long." }),
-    zip_code: z
+    zipCode: z
       .string()
       .min(1, { message: "Must be at least 1 character long." }),
     country: z.string().toUpperCase().length(2),
-    payment_method: EnumPaymentMethod,
-    cardToken: z.string().startsWith("tkn_").optional(),
-    captureMode: z.nativeEnum(CaptureMethod).optional(),
-    currency: z.string().length(3),
-    officeId: z.string().optional(),
+    officeId: z
+      .string()
+      .min(1, { message: "Office ID is required." })
+      .refine((val) => val !== "no_selection", {
+        message: "Please select a valid office.",
+      }),
+    tenantId: z
+      .string()
+      .min(1, { message: "Tenant ID is required." })
+      .refine((val) => val !== "no_selection", {
+        message: "Please select a valid tenant.",
+      }),
+    productId: z
+      .string()
+      .min(1, { message: "Product ID is required." })
+      .refine((val) => val !== "no_selection", {
+        message: "Please select a valid product.",
+      }),
+  }).transform((data) => {
+    // Regrouper officeId, tenantId, productId dans metadata
+    return {
+      ...data,
+      metadata: {
+        officeId: data.officeId,
+        tenantId: data.tenantId,
+        productId: data.productId,
+      },
+    };
   });
 
   return formSchema.parse(form);
