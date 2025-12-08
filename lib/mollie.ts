@@ -6,8 +6,8 @@ import createMollieClient, {
 import { CreatePaymentParams } from "./types";
 
 const apiKey = process.env.MOLLIE_API_KEY;
-const domain = process.env.DOMAIN || "http://localhost:3000";
-const webhookUrl = process.env.WEBHOOK_URL || "http://not.provided";
+const domain = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+const webhookUrl = process.env.NEXT_PUBLIC_MOLLIE_WEBHOOK || "http://not.provided";
 
 if (!apiKey) {
   throw new Error("MOLLIE_API_KEY is not defined");
@@ -76,10 +76,15 @@ export async function mollieCreatePayment({
     method: PaymentMethod.bancontact,
     locale: getLocaleForCountry(country),
   });
+  
   const redirectUrl = payment.getCheckoutUrl();
   return redirectUrl;
 }
-export async function mollieGetPayments() {
+export async function mollieGetAllPayments() {
   const payments = await mollieClient.payments.page();
   return payments;
+}
+export async function mollieGetPayment(id: string) {
+  const payment = await mollieClient.payments.get(id);
+  return payment;
 }

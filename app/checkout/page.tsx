@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { NullableCreatePaymentParams } from "@/lib/types";
 import Select from "../components/Select";
 import CheckoutButton from "../components/checkoutButton";
+import { validateFormData } from "@/lib/validation";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [formData, setFormData] = useState<NullableCreatePaymentParams>({
     amount: "10.00",
     firstname: "Jean",
@@ -44,10 +45,38 @@ export default function CheckoutPage() {
           subject={key}
           onChange={handleSelectChange}
           valueOptions={["1", "2", "3"]}
+          fieldErrors={fieldErrors[key] ? fieldErrors[key][0] : undefined}
         />
       );
     }
   );
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = new FormData(form);
+
+    validateFormData(data).then((result) => {
+      if (!result.success) {
+        console.log(result);
+
+        setFieldErrors({ ...result.errors });
+      } else {
+        setFieldErrors({});
+        fetch("/api/mollie/payments/create", {
+          method: "POST",
+          body: JSON.stringify(result.data),
+        }).then((res) => {
+          if (res.ok) {
+            res.json().then((data) => {
+              if (data.url) {
+                router.push(data.url);
+              }
+            });
+          }
+        });
+      }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -61,11 +90,16 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        <form id="form_payment" className="space-y-6">
+        <form onSubmit={handleSubmit} id="form_payment" className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             {displaySelectTags ?? null}
 
             <div>
+              {fieldErrors.amount && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.amount[0]}
+                </p>
+              )}
               <label
                 htmlFor="amount"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -78,10 +112,12 @@ export default function CheckoutPage() {
                 name="amount"
                 step="0.01"
                 min="0.01"
-                required
                 value={formData.amount ?? ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value.toString() })
+                  setFormData({
+                    ...formData,
+                    amount: e.target.value.toString(),
+                  })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition"
                 placeholder="10.00"
@@ -92,6 +128,11 @@ export default function CheckoutPage() {
           {/* Nom et Prénom */}
           <div className="grid grid-cols-2 gap-4">
             <div>
+              {fieldErrors.firstname && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.firstname[0]}
+                </p>
+              )}
               <label
                 htmlFor="firstname"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -102,7 +143,6 @@ export default function CheckoutPage() {
                 type="text"
                 id="firstname"
                 name="firstname"
-                required
                 value={formData.firstname ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, firstname: e.target.value })
@@ -112,6 +152,11 @@ export default function CheckoutPage() {
             </div>
 
             <div>
+              {fieldErrors.lastname && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.lastname[0]}
+                </p>
+              )}
               <label
                 htmlFor="lastname"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -122,7 +167,6 @@ export default function CheckoutPage() {
                 type="text"
                 id="lastname"
                 name="lastname"
-                required
                 value={formData.lastname ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, lastname: e.target.value })
@@ -134,6 +178,11 @@ export default function CheckoutPage() {
 
           {/* Email */}
           <div>
+            {fieldErrors.email && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.email[0]}
+              </p>
+            )}
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -144,7 +193,6 @@ export default function CheckoutPage() {
               type="email"
               id="email"
               name="email"
-              required
               value={formData.email ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -155,6 +203,11 @@ export default function CheckoutPage() {
 
           {/* Adresse */}
           <div>
+            {fieldErrors.address && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {fieldErrors.address[0]}
+              </p>
+            )}
             <label
               htmlFor="address"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -165,7 +218,6 @@ export default function CheckoutPage() {
               type="text"
               id="address"
               name="address"
-              required
               value={formData.address ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, address: e.target.value })
@@ -177,6 +229,11 @@ export default function CheckoutPage() {
           {/* Ville, Code postal, Pays */}
           <div className="grid grid-cols-3 gap-4">
             <div>
+              {fieldErrors.city && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.city[0]}
+                </p>
+              )}
               <label
                 htmlFor="city"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -187,7 +244,6 @@ export default function CheckoutPage() {
                 type="text"
                 id="city"
                 name="city"
-                required
                 value={formData.city ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, city: e.target.value })
@@ -197,6 +253,11 @@ export default function CheckoutPage() {
             </div>
 
             <div>
+              {fieldErrors.zipCode && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.zipCode[0]}
+                </p>
+              )}
               <label
                 htmlFor="zipCode"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -207,7 +268,6 @@ export default function CheckoutPage() {
                 type="text"
                 id="zipCode"
                 name="zipCode"
-                required
                 value={formData.zipCode ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, zipCode: e.target.value })
@@ -217,6 +277,11 @@ export default function CheckoutPage() {
             </div>
 
             <div>
+              {fieldErrors.country && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {fieldErrors.country[0]}
+                </p>
+              )}
               <label
                 htmlFor="country"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
@@ -226,7 +291,6 @@ export default function CheckoutPage() {
               <select
                 id="country"
                 name="country"
-                required
                 value={formData.country ?? ""}
                 onChange={(e) =>
                   setFormData({ ...formData, country: e.target.value })
@@ -240,12 +304,6 @@ export default function CheckoutPage() {
               </select>
             </div>
           </div>
-
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
           <CheckoutButton />
         </form>
 
