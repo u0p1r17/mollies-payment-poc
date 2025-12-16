@@ -5,41 +5,6 @@ import { Payment } from "@mollie/api-client";
 import { mollieGetAllPayments } from "./mollie";
 import { Metadata } from "./types";
 
-export async function createPayment(formData: FormData) {
-console.log(formData);
-
-  // const validatedForm: {
-  //   amount: string;
-  //   firstname: string;
-  //   lastname: string;
-  //   company?: string;
-  //   email: string;
-  //   address: string;
-  //   city: string;
-  //   zipCode: string;
-  //   country: string;
-  //   metadata: Metadata;
-  // } = await validateFormData(formData);
-
-  // const mollieRedirectUrl: string | null = await mollieCreatePayment(
-  //   validatedForm
-  // );
-
-  // if (!mollieRedirectUrl) {
-  //   throw new Error("Failed to create Mollie payment");
-  // }
-
-  // const validatedRedirectUrl = await validateUrl(mollieRedirectUrl);
-
-  // redirect(validatedRedirectUrl);
-}
-
-// export async function validateForm(formData: FormData) {
-//   const validatedForm = await validateFormData(formData);
-//   return validatedForm;
-// }
-
-
 export async function updatePaymentFromDB(payment: Payment) {
   const dbPath = path.join(process.cwd(), "DB", "payment.json");
   const fileContent = fs.readFileSync(dbPath, "utf-8");
@@ -49,8 +14,9 @@ export async function updatePaymentFromDB(payment: Payment) {
   );
 
   if (paymentIndex !== -1) {
-    db.payments[paymentIndex] = payment;
-    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+    throw new Error("Payment not found in DB");
+    // db.payments[paymentIndex] = payment;
+    // fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
   }
 }
 

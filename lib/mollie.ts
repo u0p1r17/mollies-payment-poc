@@ -70,15 +70,23 @@ export async function mollieCreatePayment({
       ...metadata,
     },
     description: "Demo payment from " + firstname,
-    redirectUrl: domain + "/",
-    cancelUrl: domain,
+    redirectUrl: domain + "/payment/status",
+    cancelUrl: domain + "/payment/status",
     webhookUrl: webhookUrl,
     method: PaymentMethod.bancontact,
     locale: getLocaleForCountry(country),
   });
-  
-  const redirectUrl = payment.getCheckoutUrl();
-  return redirectUrl;
+
+  const redirectWithId = `${domain}/payment/status?id=${payment.id}`;
+
+  // Make sure the user is sent back with the Mollie payment id in the query string.
+  await mollieClient.payments.update(payment.id, {
+    redirectUrl: redirectWithId,
+    cancelUrl: redirectWithId,
+  });
+
+  const checkoutUrl = payment.getCheckoutUrl();
+  return { checkoutUrl, paymentId: payment.id, redirectUrl: redirectWithId };
 }
 export async function mollieGetAllPayments() {
   const payments = await mollieClient.payments.page();

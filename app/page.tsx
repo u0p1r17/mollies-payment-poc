@@ -1,14 +1,33 @@
 "use client";
 import Link from "next/link";
-import { syncronizePaymentsWithMollie } from "@/lib/server-actions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const syncpayments = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      const response = await fetch("/api/mollie/payments/sync");
+      if (!response.ok) {
+        throw new Error("Failed to sync payments");
+      }
+      setSuccess(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setError("Error syncing payments with Mollie: " + message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    syncronizePaymentsWithMollie();
+    syncpayments();
   }, []);
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 font-sans">
@@ -49,12 +68,37 @@ export default function Home() {
             </ul>
           </div>
 
-          <Link
-            href="/checkout"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-200 shadow-lg hover:shadow-xl text-lg"
-          >
-            Tester un paiement →
-          </Link>
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              {error && (
+                <div>
+                  <p className="text-red-500 mb-4">{error}</p>{" "}
+                  <button
+                    type="button"
+                    onClick={syncpayments}
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-200 shadow-lg hover:shadow-xl text-lg"
+                  >
+                    retry
+                  </button>
+                </div>
+              )}
+              {success && (
+                <div>
+                  <p className="text-green-500 mb-4">
+                    Payments synced successfully!
+                  </p>
+                  <Link
+                    href="/checkout"
+                    className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition duration-200 shadow-lg hover:shadow-xl text-lg"
+                  >
+                    Tester un paiement →
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">

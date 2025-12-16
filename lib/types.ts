@@ -15,6 +15,10 @@ export type MollieInstance = {
   createToken: () => Promise<{ token: string; error?: string }>;
 };
 
+export type PaymentCustom = Omit<Payment, "metadata"> & {
+  metadata: Metadata;
+};
+
 export interface MollieContextType {
   mollie: MollieInstance | null;
 }
@@ -71,7 +75,7 @@ export type NullableCreateFormPayment = Omit<
   "currency" | "description" | "payment_method" | "captureMode"
 >;
 
-import type { PaymentStatus } from '@mollie/api-client';
+import type { Payment, PaymentStatus } from "@mollie/api-client";
 
 export interface PaymentRequest {
   amount: number;
@@ -98,6 +102,6 @@ export interface PaymentStatusResponse {
     currency: string;
   };
   description: string;
+  createdAt: string;
   paidAt?: string;
 }
-

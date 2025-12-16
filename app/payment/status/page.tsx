@@ -14,29 +14,22 @@ function PaymentStatusContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let paymentId = urlPaymentId;
+    const paymentId = urlPaymentId;
 
     if (!paymentId || paymentId === '{id}') {
-      const storedId = localStorage.getItem('lastPaymentId');
-      if (storedId) {
-        paymentId = storedId;
-        localStorage.removeItem('lastPaymentId');
-      } else {
-        setError('ID de paiement manquant. Veuillez créer un nouveau paiement.');
-        setLoading(false);
-        return;
-      }
+      setError('ID de paiement manquant dans l’URL de retour Mollie.');
+      setLoading(false);
+      return;
     }
 
     const fetchPaymentStatus = async () => {
       try {
-        const response = await fetch(`/api/payments/status?id=${paymentId}`);
+        const response = await fetch(`/api/mollie/payments/status?id=${paymentId}`);
         const data = await response.json();
 
         if (!response.ok) {
           throw new Error(data.error || 'Erreur lors de la récupération du statut');
         }
-
         setPayment(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Une erreur est survenue');
@@ -186,13 +179,33 @@ function PaymentStatusContent() {
                 {payment.description}
               </span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">
+                Créé le:
+              </span>
+              <span className="text-gray-900 dark:text-white">
+                {new Date(payment.createdAt).toLocaleString('fr-FR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
             {payment.paidAt && (
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
                   Payé le:
                 </span>
                 <span className="text-gray-900 dark:text-white">
-                  {new Date(payment.paidAt).toLocaleString('fr-FR')}
+                  {new Date(payment.paidAt).toLocaleString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </span>
               </div>
             )}
